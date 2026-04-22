@@ -1,4 +1,6 @@
-# CodeWiringKit - Show AI your Mental Model
+# CodeRuntimeVisor - Show AI your Mental Model
+*(formerly CodeWiringKit)*
+
 You may find this useful.
 
 /* I created this because I was frustrated with AI's inability to see my code the way I do in my mind. figured that if I could get it to see what happens in runtime, then I open the key or all pages in my app and do something , then it can 
@@ -17,7 +19,7 @@ Now back to the official stuff
 
 **See your app's runtime wiring — then hand it to AI.**
 
-CodeWiringKit is a lightweight methodology for instrumenting any app (Android, web, backend) with structured debug-only traces, capturing a live walkthrough, and producing a **WIRING.md** document that maps every screen → query → API call → security gate in your codebase.
+CodeRuntimeVisor is a lightweight methodology for instrumenting any app (Android, web, backend) with structured debug-only traces, capturing a live walkthrough, and producing a **WIRING.md** document that maps every screen → query → API call → security gate in your codebase.
 
 ## Why?
 
@@ -44,8 +46,8 @@ After a single walkthrough of your app:
 Before adopting this into your own code, run the pre-wired demo:
 
 ```bash
-git clone https://github.com/kuriandungu/CodeWiringKit.git
-cd CodeWiringKit/examples/demo-node-app
+git clone https://github.com/kuriandungu/CodeRuntimeVisor.git
+cd CodeRuntimeVisor/examples/demo-node-app
 npm install
 npm start
 ```
@@ -116,7 +118,7 @@ Example output:
 
 ## Real-World Results
 
-From the MpesaJournal Android app (first use of CodeWiringKit):
+From the MpesaJournal Android app (first use of CodeRuntimeVisor):
 
 | Finding | Impact |
 |---------|--------|
@@ -140,7 +142,7 @@ Where this pattern pays off: **production-ish apps with screens/routes + data ac
 ## Repository Structure
 
 ```
-CodeWiringKit/
+CodeRuntimeVisor/
 ├── README.md                       # This file
 ├── docs/
 │   ├── GETTING_STARTED.md          # Step-by-step guide for any platform

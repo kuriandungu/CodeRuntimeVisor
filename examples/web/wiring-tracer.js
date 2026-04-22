@@ -9,7 +9,7 @@
  *
  * All methods are no-ops when WIRING_ENABLED is false (zero production overhead).
  *
- * Created by CodeWiringKit — https://github.com/kuriandungu/CodeWiringKit
+ * Created by CodeRuntimeVisor — https://github.com/kuriandungu/CodeRuntimeVisor
  */
 
 // ---- Configuration ----

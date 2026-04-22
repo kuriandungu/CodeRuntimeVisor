@@ -1,4 +1,4 @@
-# Getting Started with CodeWiringKit
+# Getting Started with CodeRuntimeVisor
 
 This guide walks you through instrumenting your app, capturing a live trace, and producing a WIRING.md — regardless of platform. The whole process takes 30–60 minutes for a typical app.
 

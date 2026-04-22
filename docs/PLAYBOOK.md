@@ -1,4 +1,4 @@
-# CodeWiringKit Playbook
+# CodeRuntimeVisor Playbook
 
 > The AI-assisted runtime wiring playbook. Follow these phases to go from zero instrumentation to a complete WIRING.md in under an hour.
 

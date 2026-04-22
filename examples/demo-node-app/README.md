@@ -1,4 +1,4 @@
-# CodeWiringKit Demo — Pre-Wired Express App
+# CodeRuntimeVisor Demo — Pre-Wired Express App
 
 A tiny Node/Express app already instrumented with the WIRING tracer. Clone, run, hit a few endpoints, see traces flow. No Android setup, no Android Studio, nothing to install globally.
 

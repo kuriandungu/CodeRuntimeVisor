@@ -1,9 +1,9 @@
 {
-  "name": "codewiringkit-demo",
+  "name": "coderuntimevisor-demo",
   "version": "0.0.1",
   "private": true,
   "type": "module",
-  "description": "Pre-wired Express demo for CodeWiringKit. Clone, npm install, npm start, hit a few endpoints — see WIRING traces in your console.",
+  "description": "Pre-wired Express demo for CodeRuntimeVisor. Clone, npm install, npm start, hit a few endpoints — see WIRING traces in your console.",
   "main": "server.js",
   "scripts": {
     "start": "node server.js"

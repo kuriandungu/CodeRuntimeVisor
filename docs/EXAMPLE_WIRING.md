@@ -1,4 +1,4 @@
-# WIRING.md — CodeWiringKit Demo App
+# WIRING.md — CodeRuntimeVisor Demo App
 
 > Generated from live runtime trace on 2026-04-22.
 > Source trace: [`examples/sample-trace.log`](../examples/sample-trace.log)

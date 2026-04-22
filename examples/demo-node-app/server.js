@@ -1,4 +1,4 @@
-// CodeWiringKit demo — a tiny Express app, pre-wired with WIRING traces.
+// CodeRuntimeVisor demo — a tiny Express app, pre-wired with WIRING traces.
 // Run: npm install && npm start
 // Then: curl http://localhost:3000/users
 //
@@ -137,7 +137,7 @@ const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
     Wiring.init('HTTP listener', Date.now() - startupBegin);
     console.log('');
-    console.log(`CodeWiringKit demo listening on http://localhost:${PORT}`);
+    console.log(`CodeRuntimeVisor demo listening on http://localhost:${PORT}`);
     console.log('');
     console.log('Try:');
     console.log(`  curl http://localhost:${PORT}/users`);

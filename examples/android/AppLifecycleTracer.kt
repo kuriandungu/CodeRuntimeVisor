@@ -6,7 +6,7 @@
  *
  * All methods are no-ops when BuildConfig.DEBUG == false (zero production overhead).
  *
- * Created by CodeWiringKit — https://github.com/kuriandungu/CodeWiringKit
+ * Created by CodeRuntimeVisor — https://github.com/kuriandungu/CodeRuntimeVisor
  */
 
 import android.util.Log
