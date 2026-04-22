@@ -39,16 +39,34 @@ After a single walkthrough of your app:
 3. **Performance data** — Actual query durations and row counts per screen
 4. **Bug discoveries** — Duplicate queries, missing data loads, unnecessary work
 
-## Quick Start
+## Try It In 2 Minutes (No Install Into Your App)
 
-👉 **[Getting Started Guide](docs/GETTING_STARTED.md)** — Full step-by-step instructions
+Before adopting this into your own code, run the pre-wired demo:
 
-### The 30-Second Version
+```bash
+git clone https://github.com/kuriandungu/CodeWiringKit.git
+cd CodeWiringKit/examples/demo-node-app
+npm install
+npm start
+```
 
-1. Add a tracer (singleton with structured log methods)
-2. Wire it into lifecycle hooks, DB calls, HTTP calls
-3. Run your app while capturing logs
-4. Read the traces → produce WIRING.md
+Then in another terminal, hit a few endpoints:
+
+```bash
+curl localhost:3000/users
+curl localhost:3000/users/1
+curl -X POST localhost:3000/users -d '{"name":"Ada"}' -H 'Content-Type: application/json'
+```
+
+Watch traces fly in the server console. A pre-generated [`EXAMPLE_WIRING.md`](docs/EXAMPLE_WIRING.md) shows what the resulting document looks like for this demo app.
+
+## Adopting Into Your Own App
+
+👉 **[Getting Started Guide](docs/GETTING_STARTED.md)** — Full step-by-step for Android, Web, Node.js, and Python.
+
+The flow is: add a tracer (one file, copy-paste from [`examples/`](examples/)) → wire lifecycle + DB + HTTP calls → capture a walkthrough → feed the trace to your AI assistant → get a WIRING.md. 30–60 minutes for a typical app.
+
+**Uninstall is easy:** delete the tracer file and revert the call sites. Nothing installed globally, no package-manager entry.
 
 ## Platform Support
 
@@ -107,20 +125,35 @@ From the MpesaJournal Android app (first use of CodeWiringKit):
 | Person screen query was invisible to traces | Fixed: missing instrumentation on `getTransacteeSummaries()` |
 | Background resume re-queried all ViewModels | Identified as architecture-level issue for future fix |
 
+## When Not To Use This
+
+Being honest about fit:
+
+- **Apps under ~500 LOC.** You can read the whole codebase in an hour. A runtime map adds ceremony without saving time.
+- **Codebases already instrumented with OpenTelemetry, Datadog, or Sentry tracing.** You already have runtime visibility — producing a static `WIRING.md` is redundant. (That said, the *document* may still help AI assistants even when the *tracing* already exists.)
+- **Greenfield projects you're still designing.** Wait until there's actual runtime behavior to map. Instrumenting speculative code wastes effort.
+- **One-off scripts.** If it runs once and exits, there's no runtime flow worth documenting.
+- **Codebases where you never use AI assistants.** A human who knows the code doesn't need `WIRING.md`. This is mostly a win when a second reader (future-you, a new dev, or an LLM) has to understand runtime behavior cold.
+
+Where this pattern pays off: **production-ish apps with screens/routes + data access + background work, used by humans for months or years, where AI-assisted development is part of the loop.** If that's you, keep reading.
+
 ## Repository Structure
 
 ```
 CodeWiringKit/
-├── README.md                    # This file
+├── README.md                       # This file
 ├── docs/
-│   ├── GETTING_STARTED.md       # Step-by-step guide for any platform
-│   ├── PLAYBOOK.md              # The AI-assisted wiring playbook
-│   └── WIRING_TEMPLATE.md       # Blank WIRING.md template to fill in
+│   ├── GETTING_STARTED.md          # Step-by-step guide for any platform
+│   ├── PLAYBOOK.md                 # The AI-assisted wiring playbook
+│   ├── WIRING_TEMPLATE.md          # Blank WIRING.md template to fill in
+│   └── EXAMPLE_WIRING.md           # Completed WIRING.md (from the demo-node-app)
 ├── examples/
 │   ├── android/
 │   │   └── AppLifecycleTracer.kt   # Drop-in Android tracer
-│   └── web/
-│       └── wiring-tracer.js        # Drop-in web/Node.js tracer
+│   ├── web/
+│   │   └── wiring-tracer.js        # Drop-in web/Node.js tracer
+│   ├── demo-node-app/              # Pre-wired Express app — clone & run to try
+│   └── sample-trace.log            # Real trace captured from the demo app
 ├── scripts/
 │   └── capture.sh                  # ADB capture script (Android)
 └── LICENSE

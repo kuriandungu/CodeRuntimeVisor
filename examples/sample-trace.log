@@ -1,0 +1,45 @@
+# Captured from examples/demo-node-app during a typical walkthrough.
+# Produced by: npm start 2>&1 | grep WIRING | tee sample-trace.log
+# This is real output — not hand-written — so the patterns you see below are
+# exactly what you'll capture from your own app once you wire it up.
+#
+# The walkthrough that produced this trace:
+#   1. Hit /health (data-free endpoint as a control)
+#   2. GET /users (list all)
+#   3. GET /users/1 (single lookup)
+#   4. GET /users/2 (single lookup)
+#   5. GET /users/999 (not-found path)
+#   6. POST /users with valid body (create)
+#   7. POST /users with missing name (validation fail)
+#   8. GET /orders (simulated JOIN, slower)
+#   9. GET /users (list after create — now 4 rows)
+#  10. Two parallel GET /users (to show duplicate-query patterns)
+#
+# See docs/EXAMPLE_WIRING.md for the WIRING.md written from this trace.
+
+[WIRING] 18:58:10.385|INIT|Express app
+[WIRING] 18:58:10.390|INIT|HTTP listener|dur=5ms
+[WIRING] 18:58:25.159|HTTP|GET /health|code=200 dur=3ms
+[WIRING] 18:58:25.519|DB_READ|getAllUsers|rows=3 dur=5ms
+[WIRING] 18:58:25.519|HTTP|GET /users|code=200 dur=5ms
+[WIRING] 18:58:25.874|DB_READ|getUserById|rows=1 dur=2ms
+[WIRING] 18:58:25.874|HTTP|GET /users/1|code=200 dur=2ms
+[WIRING] 18:58:26.230|DB_READ|getUserById|rows=1 dur=2ms
+[WIRING] 18:58:26.230|HTTP|GET /users/2|code=200 dur=2ms
+[WIRING] 18:58:26.590|DB_READ|getUserById|rows=0 dur=2ms
+[WIRING] 18:58:26.590|SEC_GATE|userExists|NOT_FOUND
+[WIRING] 18:58:26.590|HTTP|GET /users/999|code=404 dur=2ms
+[WIRING] 18:58:26.950|SEC_GATE|validateUserInput|PASS
+[WIRING] 18:58:26.958|DB_WRITE|users|op=INSERT rows=1
+[WIRING] 18:58:26.964|DB_READ|refreshUserCache|rows=4 dur=6ms
+[WIRING] 18:58:26.964|HTTP|POST /users|code=201 dur=14ms
+[WIRING] 18:58:27.318|SEC_GATE|validateUserInput|FAIL_MISSING_NAME
+[WIRING] 18:58:27.318|HTTP|POST /users|code=400 dur=0ms
+[WIRING] 18:58:27.692|DB_READ|getOrdersWithUsers|rows=4 dur=15ms
+[WIRING] 18:58:27.692|HTTP|GET /orders|code=200 dur=16ms
+[WIRING] 18:58:28.054|DB_READ|getAllUsers|rows=4 dur=5ms
+[WIRING] 18:58:28.054|HTTP|GET /users|code=200 dur=5ms
+[WIRING] 18:58:28.409|DB_READ|getAllUsers|rows=4 dur=5ms
+[WIRING] 18:58:28.409|HTTP|GET /users|code=200 dur=5ms
+[WIRING] 18:58:28.416|DB_READ|getAllUsers|rows=4 dur=5ms
+[WIRING] 18:58:28.416|HTTP|GET /users|code=200 dur=5ms

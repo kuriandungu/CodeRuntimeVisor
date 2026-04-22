@@ -22,6 +22,8 @@ The tracer is a single function (or small module) that writes structured log lin
 - Use a consistent **log format**: `timestamp|EVENT_CODE|subject|details`
 - Use a **filterable tag** so you can isolate wiring logs from normal output
 
+> **Naming convention used throughout these docs:** we refer to the tracer as `Tracer.X()` (e.g. `Tracer.dbRead(...)`). That's a placeholder — in your own code, name it whatever fits: `AppLifecycleTracker`, `Wiring`, `Log`, or drop the namespace entirely and call the bare functions. The contract is the log format, not the class name.
+
 ### Android/Kotlin
 
 Add to an existing singleton or Application class:
@@ -305,12 +307,12 @@ Log at decision points where the app routes differently based on state:
 ```kotlin
 // Android example
 val isLoggedIn = authManager.isLoggedIn()
-AppLifecycleTracker.setting("isLoggedIn", isLoggedIn.toString())
+Tracer.setting("isLoggedIn", isLoggedIn.toString())
 if (isLoggedIn) {
-    AppLifecycleTracker.securityGate("appLaunch", "PASS")
+    Tracer.securityGate("appLaunch", "PASS")
     navigateToHome()
 } else {
-    AppLifecycleTracker.securityGate("appLaunch", "REDIRECT_LOGIN")
+    Tracer.securityGate("appLaunch", "REDIRECT_LOGIN")
     navigateToLogin()
 }
 ```
@@ -320,13 +322,13 @@ if (isLoggedIn) {
 ```kotlin
 // Android WorkManager
 override fun doWork(): Result {
-    AppLifecycleTracker.worker("SyncWorker", "START")
+    Tracer.worker("SyncWorker", "START")
     try {
         // ... do work
-        AppLifecycleTracker.worker("SyncWorker", "SUCCESS")
+        Tracer.worker("SyncWorker", "SUCCESS")
         return Result.success()
     } catch (e: Exception) {
-        AppLifecycleTracker.worker("SyncWorker", "FAIL|${e.message}")
+        Tracer.worker("SyncWorker", "FAIL|${e.message}")
         return Result.failure()
     }
 }
@@ -392,7 +394,27 @@ Use this checklist to ensure you cover everything:
 
 ## Step 4: Read Traces → Produce WIRING.md
 
-This is where the magic happens. You have two options:
+Before handing the trace to an AI assistant, take 2 minutes to **read it yourself** — it builds the intuition that lets you catch when the AI summary is wrong.
+
+### Reading a trace by eye
+
+Open `trace.log` in any editor. Each line is `timestamp|EVENT_CODE|subject|details`. A useful first pass:
+
+1. **Start at the top and follow the story chronologically.** The first 10-20 lines are usually the cold-start sequence: `INIT` steps, the first activity/route loading, the default screen's data queries. Make a mental model — this is your app's startup.
+
+2. **Look for repetition within a 200ms window.** Same `DB_READ|getUsers|...` appearing 3× in quick succession is a duplicate-query smell, usually caused by overlapping observers or a query running in both `onCreate()` *and* `onResume()`.
+
+3. **Count queries per screen.** Find each `FRAG_RESUME` / `ROUTE` / `PAGE_LOAD` event and look at the `DB_READ`/`HTTP` events that follow it before the next navigation. That set IS that screen's data footprint. Now you know what each screen actually fetches.
+
+4. **Check the `dur=` values.** Anything over ~300ms on a `DB_READ` or over 1000ms on an `HTTP` is worth flagging. Add to Issues.
+
+5. **Look for screens with no data.** A `FRAG_RESUME` followed by the next navigation with nothing in between = either a genuinely data-free screen (fine) or missing instrumentation (add traces).
+
+6. **Look for orphan `DB_READ` — queries that fire without an obvious screen triggering them.** Usually a worker, timer, or background observer. Not always a bug, but worth naming in WIRING.md.
+
+A single 150-line trace, read this way, gives you ~80% of what you need for WIRING.md. See [`examples/sample-trace.log`](../examples/sample-trace.log) and the matching [`docs/EXAMPLE_WIRING.md`](EXAMPLE_WIRING.md) to see the pattern worked through end-to-end.
+
+Once you've done one pass by hand, the AI step below is easier to sanity-check — you already know roughly what you're looking at.
 
 ### Option A: AI-Assisted (Recommended)
 

@@ -1,0 +1,13 @@
+# GitHub Linguist hints — this is a methodology/documentation repository, not a shell toolkit.
+# Without these rules, GitHub reports "Language: Shell 100%" on the repo landing page
+# because capture.sh is the largest non-docs file.
+
+# Mark shell helpers as vendored so they don't dominate the language stats.
+*.sh linguist-detectable=false
+
+# Force Markdown to count as a real language so the repo reads as what it is: documentation.
+*.md linguist-detectable=true
+*.md linguist-documentation=false
+
+# Normal line-ending handling for text files
+* text=auto

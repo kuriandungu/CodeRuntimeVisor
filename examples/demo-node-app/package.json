@@ -1,0 +1,15 @@
+{
+  "name": "codewiringkit-demo",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "description": "Pre-wired Express demo for CodeWiringKit. Clone, npm install, npm start, hit a few endpoints — see WIRING traces in your console.",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2"
+  },
+  "license": "MIT"
+}
