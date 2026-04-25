@@ -1,49 +1,26 @@
-# CodeRuntimeVisor - Show AI your Mental Model
-*(formerly CodeWiringKit)*
+# CodeRuntimeVisor
 
-You may find this useful.
+**Turn runtime traces into an AI-readable map of your app.**
 
-/* I created this because I was frustrated with AI's inability to see my code the way I do in my mind. figured that if I could get it to see what happens in runtime, then I open the key or all pages in my app and do something , then it can 
-see the data flow and next time I ask it to debug something it knows the connections.
-So I tried it out and it seems to work, pretty well actually. In one of my android projects I have a page that is used for 3 different purposes, simply by hiding some feature and exposing others. each go through a different pipeline and all this is determined
-by server settings that update on each sync.  After doing this wiring , Claude was able to now know that any changes to that page had to consider all the 3 scenarios and it stopped blindly changing code for just one path.
+AI coding agents are good at reading source code, but source code alone often misses the part that matters most: what actually happens at runtime.
 
-so basically all this is in Alpha or Pre alpha (hehe). Claude will do the wiring logs and then you run your app and open all the pages and do something within them. then you copy paste the logs and give them to Claude and it then creates 
-a wiring diagram. Thereafter I include a summarized version of this in the my startup sequence so that claude is aware. for gritty bugs I tell it to read the wiring.md file then I go ahead and do the bug fixes
+CodeRuntimeVisor is a lightweight workflow for adding debug-only structured traces to an app, capturing a real walkthrough, and turning that trace into a `WIRING.md` document your AI assistant can use as durable context.
 
-I'm hoping someone can extend all this to work for other platforms. web etc */
+It helps answer questions like:
 
-if you do find this useful and decide to buy a coffee do so here https://buymeacoffee.com/kuriandungu
+- Which screen calls which database query?
+- Which API request fires after login?
+- Which settings or feature flags changed the path?
+- Which background worker runs after the user closes the app?
+- Which query is firing twice because of lifecycle or observer overlap?
 
-Now back to the official stuff
+The goal is not to replace logging, OpenTelemetry, Sentry, Datadog, or any other observability stack. The goal is narrower and more practical:
 
-**See your app's runtime wiring — then hand it to AI.**
+**Give your AI assistant the runtime mental model that usually only lives in your head.**
 
-CodeRuntimeVisor is a lightweight methodology for instrumenting any app (Android, web, backend) with structured debug-only traces, capturing a live walkthrough, and producing a **WIRING.md** document that maps every screen → query → API call → security gate in your codebase.
+## Quick Demo
 
-## Why?
-
-AI coding assistants (Claude, ChatGPT, Copilot) are great at reading static code. But static code can't tell you:
-
-- Which database query fires when a user opens the Settings page
-- That your SMS log screen loads 9,000 rows **three times** due to overlapping observers
-- The exact startup sequence: Application → Splash → PIN check → MainActivity → default fragment
-- Which screens re-query when the app returns from background
-
-**Runtime traces answer these questions in minutes.** Feed the resulting WIRING.md to your AI assistant, and it instantly understands how your app actually behaves — not just how it's written.
-
-## What You Get
-
-After a single walkthrough of your app:
-
-1. **WIRING.md** — A structured document mapping screens, queries, API calls, workers, and security gates
-2. **Trace logs** — Timestamped evidence of every lifecycle event, DB read, HTTP call
-3. **Performance data** — Actual query durations and row counts per screen
-4. **Bug discoveries** — Duplicate queries, missing data loads, unnecessary work
-
-## Try It In 2 Minutes (No Install Into Your App)
-
-Before adopting this into your own code, run the pre-wired demo:
+Try the pre-wired Node demo in about two minutes:
 
 ```bash
 git clone https://github.com/kuriandungu/CodeRuntimeVisor.git
@@ -52,44 +29,88 @@ npm install
 npm start
 ```
 
-Then in another terminal, hit a few endpoints:
+In another terminal, hit a few endpoints:
 
 ```bash
-curl localhost:3000/users
-curl localhost:3000/users/1
-curl -X POST localhost:3000/users -d '{"name":"Ada"}' -H 'Content-Type: application/json'
+curl http://localhost:3000/users
+curl http://localhost:3000/users/1
+curl http://localhost:3000/users/999
+curl -X POST http://localhost:3000/users \
+  -H "Content-Type: application/json" \
+  -d '{"name":"Ada","email":"ada@example.com"}'
+curl http://localhost:3000/orders
 ```
 
-Watch traces fly in the server console. A pre-generated [`EXAMPLE_WIRING.md`](docs/EXAMPLE_WIRING.md) shows what the resulting document looks like for this demo app.
+You will see trace lines like:
 
-## Adopting Into Your Own App
-
-👉 **[Getting Started Guide](docs/GETTING_STARTED.md)** — Full step-by-step for Android, Web, Node.js, and Python.
-
-The flow is: add a tracer (one file, copy-paste from [`examples/`](examples/)) → wire lifecycle + DB + HTTP calls → capture a walkthrough → feed the trace to your AI assistant → get a WIRING.md. 30–60 minutes for a typical app.
-
-**Uninstall is easy:** delete the tracer file and revert the call sites. Nothing installed globally, no package-manager entry.
-
-## Platform Support
-
-| Platform | Tracer | Capture |
-|----------|--------|---------|
-| **Android/Kotlin** | Logcat with `Log.d("WIRING", ...)` | `adb logcat -s WIRING:V` |
-| **Web/JS** | `console.debug("[WIRING]", ...)` | Browser DevTools console filter |
-| **Node.js** | `console.debug("[WIRING]", ...)` | `node app.js 2>&1 \| grep WIRING` |
-| **iOS/Swift** | `os_log(.debug, "[WIRING] ...")` | Xcode console filter |
-| **Python** | `logging.debug("[WIRING] ...")` | `python app.py 2>&1 \| grep WIRING` |
-
-## Trace Format
-
-All platforms use the same structured format:
-
+```txt
+[WIRING] 13:07:27.962|DB_WRITE|users|op=INSERT rows=1
+[WIRING] 13:07:27.968|DB_READ|refreshUserCache|rows=4 dur=6ms
+[WIRING] 13:07:27.968|HTTP|POST /users|code=201 dur=15ms
 ```
+
+That small trace already tells a story: every successful `POST /users` writes one row, then immediately re-reads the full user table. In a tiny demo that is harmless. In a real production app, that pattern can become a performance bug.
+
+That is the point of CodeRuntimeVisor: make runtime behavior visible, structured, and easy to hand to an AI assistant.
+
+See [`docs/EXAMPLE_WIRING.md`](docs/EXAMPLE_WIRING.md) for the `WIRING.md` generated from the demo trace.
+
+## Why This Exists
+
+AI assistants can inspect classes, functions, routes, and schemas. But static code does not reliably tell them:
+
+- Which path a real user actually took through the app
+- Which screen caused a database query to run
+- Which API call followed a settings refresh
+- Which lifecycle event caused a reload
+- Which server-driven flag changed the visible UI
+- Which worker continued after the app went into the background
+
+That gap matters in older production apps, mobile apps, admin tools, offline-first systems, server-driven UI, and codebases where one screen has multiple runtime modes.
+
+CodeRuntimeVisor closes that gap by producing a small, factual runtime map:
+
+```txt
 timestamp|EVENT_CODE|subject|details
 ```
 
-Example output:
+Those trace lines become a `WIRING.md` file that your AI assistant can read before making changes.
+
+## What You Get
+
+After a walkthrough of your app, you get:
+
+1. **A `WIRING.md` runtime map** showing screens, routes, queries, API calls, workers, settings, and security gates.
+2. **Trace logs** with timestamped evidence of what actually happened.
+3. **Performance clues** such as row counts, durations, duplicate calls, and heavy reads.
+4. **Bug discoveries** such as duplicate queries, missing loads, unnecessary cache refreshes, or hidden background behavior.
+
+This is most useful when your app is too large or too dynamic for static reading to explain the real behavior quickly.
+
+## The Workflow
+
+The workflow is intentionally simple:
+
+1. Add a small debug-only tracer.
+2. Add trace calls around lifecycle events, DB queries, API calls, workers, settings, and security gates.
+3. Run the app and walk through the important flows.
+4. Save the trace output.
+5. Ask an AI assistant to turn the trace into `WIRING.md`.
+6. Keep `WIRING.md` in your repo as runtime context for future debugging and coding sessions.
+
+For full instructions, see [`docs/GETTING_STARTED.md`](docs/GETTING_STARTED.md).
+
+## Trace Format
+
+All platforms use the same basic format:
+
+```txt
+timestamp|EVENT_CODE|subject|details
 ```
+
+Example:
+
+```txt
 12:23:22.159|INIT|Application.onCreate.start
 12:23:22.661|INIT|DatabaseRoutines|dur=500ms
 12:23:25.771|FRAG_RESUME|RecentsFragment|host=MainActivity
@@ -101,70 +122,110 @@ Example output:
 ## Event Codes
 
 | Code | What It Captures |
-|------|-----------------|
+|------|------------------|
 | `INIT` | App/module initialization steps with duration |
-| `ACT_CREATE` | Activity/page created (FRESH or RELAUNCH) |
+| `ACT_CREATE` | Activity/page created |
 | `ACT_RESUME` | Activity/page became visible |
 | `ACT_PAUSE` | Activity/page went to background |
 | `FRAG_RESUME` | Fragment/component became visible |
 | `FRAG_PAUSE` | Fragment/component hidden |
-| `DB_READ` | Database query: table, row count, duration |
+| `PAGE_LOAD` | Web page loaded |
+| `ROUTE` | Web/app route transition |
+| `DB_READ` | Database query with row count and duration |
 | `DB_WRITE` | Database insert/update/delete |
-| `HTTP` | Network call: method, endpoint, status, duration |
-| `WORKER` | Background job: name, state (START/SUCCESS/FAIL) |
-| `SEC_GATE` | Security checkpoint: gate name, result (PASS/FAIL) |
+| `HTTP` | Network call with method, endpoint, status, and duration |
+| `WORKER` | Background job state |
+| `SEC_GATE` | Security or validation checkpoint |
 | `SETTING` | Config/preference read at a decision point |
-| `BRANCH` | Routing decision: which path was taken |
+| `BRANCH` | Runtime branch or routing decision |
+
+## Platform Support
+
+| Platform | Trace Output | Capture |
+|----------|--------------|---------|
+| Android/Kotlin | `Log.d("WIRING", "...")` | `adb logcat -s WIRING:V` |
+| Web/JavaScript | `console.debug("[WIRING]", "...")` | Browser DevTools console filter |
+| Node.js | `console.debug("[WIRING]", "...")` | `node app.js 2>&1 | grep WIRING` |
+| iOS/Swift | `os_log(.debug, "[WIRING] ...")` | Xcode console filter |
+| Python | `logging.debug("[WIRING] ...")` | `python app.py 2>&1 | grep WIRING` |
+
+The repository currently includes drop-in examples for Android and JavaScript/Node. The format is simple enough to adapt to other platforms.
 
 ## Real-World Results
 
-From the MpesaJournal Android app (first use of CodeRuntimeVisor):
+This approach came from real debugging work on production-ish Android apps.
+
+In one app, runtime traces revealed:
 
 | Finding | Impact |
 |---------|--------|
-| SMS log screen queried 9,000 rows **3x** on load | Fixed: StateFlow observers lacked `isFirst` guards |
-| Type and Time screens double-queried on entry | Fixed: `loadData()` called in both `onCreate()` and `onResume()` |
-| Person screen query was invisible to traces | Fixed: missing instrumentation on `getTransacteeSummaries()` |
-| Background resume re-queried all ViewModels | Identified as architecture-level issue for future fix |
+| SMS log screen queried 9,000 rows three times on load | Fixed overlapping observer behavior |
+| Type and Time screens double-queried on entry | Fixed duplicate lifecycle loading |
+| Person screen query was invisible to traces | Added missing instrumentation |
+| Background resume re-queried all ViewModels | Identified architecture-level reload behavior |
+
+In another app, one Android screen served multiple roles. The visible controls, allowed actions, and data pipeline changed based on server settings fetched during sync. Static code review made AI assistants focus on one path at a time. After generating a runtime wiring document, the assistant understood that changes to that screen had to account for all runtime modes.
+
+That is the use case CodeRuntimeVisor is built for.
+
+## When To Use This
+
+CodeRuntimeVisor is useful when:
+
+- Your app has screens/routes plus data access.
+- Runtime behavior changes based on settings, roles, flags, or server config.
+- Background jobs, sync, or workers matter.
+- You use AI assistants for debugging or development.
+- The codebase is large enough that reading files alone is slow or misleading.
+
+It is especially useful for older production apps where the real architecture is partly in lifecycle behavior, stored settings, database state, and background work.
 
 ## When Not To Use This
 
-Being honest about fit:
+This is probably not worth it for:
 
-- **Apps under ~500 LOC.** You can read the whole codebase in an hour. A runtime map adds ceremony without saving time.
-- **Codebases already instrumented with OpenTelemetry, Datadog, or Sentry tracing.** You already have runtime visibility — producing a static `WIRING.md` is redundant. (That said, the *document* may still help AI assistants even when the *tracing* already exists.)
-- **Greenfield projects you're still designing.** Wait until there's actual runtime behavior to map. Instrumenting speculative code wastes effort.
-- **One-off scripts.** If it runs once and exits, there's no runtime flow worth documenting.
-- **Codebases where you never use AI assistants.** A human who knows the code doesn't need `WIRING.md`. This is mostly a win when a second reader (future-you, a new dev, or an LLM) has to understand runtime behavior cold.
+- Apps under roughly 500 lines of code.
+- One-off scripts.
+- Greenfield projects whose runtime behavior does not exist yet.
+- Teams that already have excellent tracing and do not need an AI-readable runtime document.
+- Codebases where AI assistants are not part of the workflow.
 
-Where this pattern pays off: **production-ish apps with screens/routes + data access + background work, used by humans for months or years, where AI-assisted development is part of the loop.** If that's you, keep reading.
+Even if you already use OpenTelemetry, Sentry, Datadog, or another observability tool, the `WIRING.md` document may still be useful as compact AI context. But the tracing itself is not meant to compete with those systems.
 
 ## Repository Structure
 
-```
+```txt
 CodeRuntimeVisor/
-├── README.md                       # This file
+├── README.md
 ├── docs/
-│   ├── GETTING_STARTED.md          # Step-by-step guide for any platform
-│   ├── PLAYBOOK.md                 # The AI-assisted wiring playbook
-│   ├── WIRING_TEMPLATE.md          # Blank WIRING.md template to fill in
-│   └── EXAMPLE_WIRING.md           # Completed WIRING.md (from the demo-node-app)
+│   ├── GETTING_STARTED.md
+│   ├── PLAYBOOK.md
+│   ├── WIRING_TEMPLATE.md
+│   └── EXAMPLE_WIRING.md
 ├── examples/
 │   ├── android/
-│   │   └── AppLifecycleTracer.kt   # Drop-in Android tracer
+│   │   └── AppLifecycleTracer.kt
 │   ├── web/
-│   │   └── wiring-tracer.js        # Drop-in web/Node.js tracer
-│   ├── demo-node-app/              # Pre-wired Express app — clone & run to try
-│   └── sample-trace.log            # Real trace captured from the demo app
+│   │   └── wiring-tracer.js
+│   ├── demo-node-app/
+│   └── sample-trace.log
 ├── scripts/
-│   └── capture.sh                  # ADB capture script (Android)
+│   └── capture.sh
 └── LICENSE
 ```
 
+## Origin Story
+
+I built this because I was frustrated with AI assistants missing the runtime shape of my code.
+
+In my head, I knew how the app worked: which screens loaded which data, which server settings changed the path, which background jobs mattered, and which shared screens behaved differently depending on role. But the AI only saw static source files. It could read the code, but it did not have the same mental model.
+
+So I started adding structured debug traces, walking through the app, and asking the AI to turn those traces into a wiring document. Once that document existed, the assistant stopped treating shared screens as single-purpose screens and started making safer suggestions.
+
+This project is early, but the workflow has already helped me find duplicate queries, missing instrumentation, hidden reloads, and runtime paths that were not obvious from source code alone.
+
+If you find it useful and want to support the work: https://buymeacoffee.com/kuriandungu
+
 ## License
 
-MIT — use it however you want.
-
----
-
-*Created from real instrumentation work on the MpesaJournal Android app. If this saves you debugging time, that's the whole point.*
+MIT. Use it however you want.
