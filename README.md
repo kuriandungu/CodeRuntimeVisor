@@ -41,6 +41,8 @@ curl -X POST http://localhost:3000/users \
 curl http://localhost:3000/orders
 ```
 
+> **Windows PowerShell:** swap the POST body for `-d "{\"name\":\"Ada\",\"email\":\"ada@example.com\"}"` — PowerShell mangles single-quoted JSON.
+
 You will see trace lines like:
 
 ```txt
